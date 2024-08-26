@@ -14,8 +14,10 @@ import cv2
 import numpy as np
 import base64
 import os
+from flask_cors import CORS
 # Initialize the Flask application
 app = Flask(__name__)
+CORS(app)
 
 config = {'orient' : True,    #corrects orientation of image default -> True
           'skew' : False,     #corrects skewness of image default -> True
@@ -97,11 +99,20 @@ def mask():
 
 #Brut Mask any Readable Number from Aadhaar (works good for low res and bad quality images)
 
+def add_padding(b64_string):
+    # Add padding to the base64 string
+    missing_padding = len(b64_string) % 4
+    if missing_padding != 0:
+        b64_string += '=' * (4 - missing_padding)
+    return b64_string
+
+
 @app.route('/api/brut_mask', methods=['GET','POST'])
 def brut_mask():
     r = request.get_json(force=True)  #force=True #content type application/json
     temp_name = "temp_unmasked.png" 
     image = r['doc_b64'] # raw data with base64 encoding
+    # image = add_padding(image)
     decoded_data = base64.b64decode(image)
     np_data = np.fromstring(decoded_data,np.uint8)
     img = cv2.imdecode(np_data,cv2.IMREAD_UNCHANGED)
